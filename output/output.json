@@ -1,0 +1,26 @@
+{
+    "params": {
+        "scale": [
+            0,
+            -12,
+            10,
+            0
+        ],
+        "carrier_change_samples": 50,
+        "init_grain_size_ms": 100,
+        "grain_size_change_ms": 20,
+        "min_grain_size_ms": 20,
+        "max_grain_size_ms": 2000,
+        "init_overlap_amount": 0.6,
+        "overlap_amount_change": 0.01,
+        "branch_overlap_amount": 0.8,
+        "init_carrier_position": 0.12
+    },
+    "lsystem": {
+        "axiom": "F",
+        "rules": {
+            "F": "F++F[DDDFFF]TTT[+++++++++++++++FF]tF---ttF"
+        },
+        "iterations": 5
+    }
+}
