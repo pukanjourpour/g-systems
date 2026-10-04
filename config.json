@@ -1,12 +1,10 @@
 {
+    "input_file_path": "./media/strings.wav",
+    "output_dir_path": "./output",
+    "output_file_name": "output",
     "params": {
-        "scale": [
-            0,
-            -12,
-            10,
-            0
-        ],
-        "carrier_change_samples": 50,
+        "scale": [0, -12, 10, 0],
+        "carrier_change_ms": 1,
         "init_grain_size_ms": 100,
         "grain_size_change_ms": 20,
         "min_grain_size_ms": 20,

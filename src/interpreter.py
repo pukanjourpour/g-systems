@@ -16,7 +16,7 @@ class Interpreter():
         
         self._scale = options.get("scale", [0])
         
-        self._carrier_change_samples = options.get("carrier_change_samples", 20)
+        self._carrier_change_samples = int(samplerate * options.get("carrier_change_ms", 1) / 1000)
         self._min_grain_size_samples = int(self._samplerate * options.get("min_grain_size_ms", 10) / 1000) 
         self._max_grain_size_samples = int(self._samplerate * options.get("max_grain_size_ms", 1000) / 1000) 
         self._init_grain_size_samples = int(self._samplerate * options.get("init_grain_size_ms", 100) / 1000)
