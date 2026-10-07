@@ -5,6 +5,10 @@ import matplotlib.patheffects as pe
 
 import pyrubberband as pyrb
 
+from alive_progress import alive_bar
+
+from scipy.interpolate import CubicSpline
+
 class Interpreter():
     
     def __init__(self, source_signal, samplerate, **options):
@@ -15,6 +19,7 @@ class Interpreter():
         self._samplerate = samplerate
         
         self._scale = options.get("scale", [0])
+        self._scale_ratios = np.pow(2, np.array(self._scale)/12)
         
         self._carrier_change_samples = int(samplerate * options.get("carrier_change_ms", 1) / 1000)
         self._min_grain_size_samples = int(self._samplerate * options.get("min_grain_size_ms", 10) / 1000) 
@@ -114,6 +119,17 @@ class Interpreter():
         
         return self._signal_layers[depth]
 
+    def _stretch_grain(self, grain, multiplier):
+        stretched = grain
+        if not multiplier == 1: 
+            x = np.arange(len(grain))
+            x_fine = np.linspace(start=x[0], stop=x[-1], num=int(x.size / multiplier))
+            
+            cs = CubicSpline(x, grain, bc_type='natural')
+            stretched = cs(x_fine)
+        
+        return stretched
+
     def _interpret(self, 
                    word, 
                    letter_index=0, 
@@ -131,19 +147,25 @@ class Interpreter():
         
         start_output_idx = output_idx
         
-        while i < len(word):    
+        while i < len(word):  
+            self._bar()  
             c = word[i]
             
             if c == "F":
                 # Play a grain forwards
                    
                 grain = self._get_grain(carrier_pos_sample, grain_size)
+                
+                ratio = self._scale_ratios[min(depth, len(self._scale_ratios) - 1)]
+                grain = self._stretch_grain(grain, ratio)
                 grain = self._smoothen_ends(grain)
+                
+                new_grain_size = grain.size
                 
                 layer_signal = self._insert_grain(layer_signal, grain, output_idx)
                 self._log(output_idx, grain_size, depth)
                 
-                output_idx += int(grain_size * grain_nooverlap_amount)
+                output_idx += int(new_grain_size * grain_nooverlap_amount)
                 
                 if output_idx_branch < output_idx:
                     output_idx_branch = output_idx
@@ -152,12 +174,17 @@ class Interpreter():
                 
                 grain = self._get_grain(carrier_pos_sample - grain_size, grain_size)
                 grain = np.flip(grain)
+                
+                ratio = self._scale_ratios[min(depth, len(self._scale_ratios) - 1)]
+                grain = self._stretch_grain(grain, ratio)
                 grain = self._smoothen_ends(grain)
+                
+                new_grain_size = grain.size
                 
                 layer_signal = self._insert_grain(layer_signal, grain, output_idx)
                 self._log(output_idx, grain_size, depth, forwards=False)
                 
-                output_idx += int(grain_size * grain_nooverlap_amount)
+                output_idx += int(new_grain_size * grain_nooverlap_amount)
                 
                 if output_idx_branch < output_idx:
                     output_idx_branch = output_idx
@@ -216,11 +243,13 @@ class Interpreter():
     
     def interpret(self, word):
         
-        self._interpret(word, 
-                        carrier_pos_sample=int(self._init_carrier_position*self._signal_length), 
-                        grain_size=self._init_grain_size_samples, 
-                        grain_nooverlap_amount=self._init_nooverlap_amount
-                        )
+        with alive_bar(len(word)) as bar:
+            self._bar = bar 
+            self._interpret(word, 
+                            carrier_pos_sample=int(self._init_carrier_position*self._signal_length), 
+                            grain_size=self._init_grain_size_samples, 
+                            grain_nooverlap_amount=self._init_nooverlap_amount
+                            )
         
         result = np.array([])
         
@@ -228,7 +257,7 @@ class Interpreter():
 
             for depth in range(len(self._signal_layers)):
                 layer = self._signal_layers[depth]
-                layer = pyrb.pitch_shift(layer, self._samplerate, self._scale[min(depth, len(self._scale) - 1)])
+                # layer = pyrb.pitch_shift(layer, self._samplerate, self._scale[min(depth, len(self._scale) - 1)])
                 
                 result = self._insert_grain(result, layer, 0)
         
