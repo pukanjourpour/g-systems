@@ -2,7 +2,7 @@ from src.lsystem import lsystem
 from src.interpreter import Interpreter
 
 import soundfile as sf
-import os.path as path
+from os import path, makedirs
 import json
 import time
 
@@ -23,7 +23,7 @@ def main(config):
 
     # Process signal
 
-    source_signal, samplerate = sf.read(input_path, dtype='float32')
+    source_signal, samplerate = sf.read(input_path, dtype='float32', always_2d=True)
 
     gran = Interpreter(source_signal, samplerate, **params)
 
@@ -37,13 +37,19 @@ def main(config):
 
 
     # Write output
+    
+    directory = path.join(output_dir, output_name)
+    
+    if not path.exists(directory):
+        makedirs(directory)
 
-    sf.write(path.join(output_dir, f"{output_name}.wav"), result_signal, samplerate)
+    sf.write(path.join(directory, f"{output_name}.wav"), result_signal, samplerate)
 
-        
+    with open(path.join(directory, f"{output_name}.json"), 'w') as f:
+        json.dump(config, f)
+    
     # gran.plot()
     
-
 
 if __name__ == "__main__":
     

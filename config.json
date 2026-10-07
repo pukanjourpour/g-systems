@@ -1,9 +1,9 @@
 {
     "input_file_path": "./media/strings.wav",
     "output_dir_path": "./output",
-    "output_file_name": "output",
+    "output_file_name": "example",
     "params": {
-        "scale": [0, -12, 10, 0],
+        "scale": [0, -12, -24],
         "carrier_change_ms": 1,
         "init_grain_size_ms": 100,
         "grain_size_change_ms": 20,
@@ -19,6 +19,6 @@
         "rules": {
             "F": "F++F[DDDFFF]TTT[+++++++++++++++FF]tF---ttF"
         },
-        "iterations": 5
+        "iterations": 4
     }
 }
